@@ -17,9 +17,8 @@ test = [|a <> b|]
 multi :: Name -> Q Exp
 multi n = [| ($(varE n) *) |]
 
-withDict :: Q Exp -> Q Exp
-withDict q = do
-  let ls = $(varE $ mkName "ls")
+withDict :: [String] -> Q Exp -> Q Exp
+withDict ls q = do
   dict <- newName "dict"
   lamE [varP dict] $
     letE
