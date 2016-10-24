@@ -14,9 +14,6 @@ import Data.HashMap.Lazy ((!))
 test :: Q Exp
 test = [|a <> b|]
 
-multi :: Name -> Q Exp
-multi n = [| ($(varE n) *) |]
-
 withDict :: [String] -> Q Exp -> Q Exp
 withDict ls q = do
   dict <- newName "dict"
