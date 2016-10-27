@@ -3,6 +3,6 @@
 
 module Data where
 
-import Type ((:<|>), Embedded)
+import Type ((:.), NamedVal)
 
-type MyAPI = Embedded "a" :<|> Embedded "b"
+type MyAPI = NamedVal "a" :. NamedVal "b"

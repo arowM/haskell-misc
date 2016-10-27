@@ -10,7 +10,7 @@ import Data.Text.Internal.Builder (toLazyText)
 import qualified Data.Text.Lazy.IO as TLIO
 import TH
 import Data.Proxy (Proxy(..))
-import Type ((:<|>)(..), Embedded, keys, kvs, embedded)
+import Type ((:.)(..), NamedVal, keys, kvs, namedVal)
 import Data (MyAPI)
 import Text.Shakespeare.Text (textFile)
 
@@ -23,5 +23,5 @@ main = do
       (textFile "app/test.html")
     )
     $ LHM.fromList $ kvs (Proxy :: Proxy MyAPI) $
-      (embedded a0 :: Embedded "a") :<|>
-      (embedded "var1" :: Embedded "b")
+      (namedVal a0 :: NamedVal "a") :.
+      (namedVal "var1" :: NamedVal "b")
