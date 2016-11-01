@@ -8,6 +8,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE IncoherentInstances #-}
 
 module Type where
 {- | The goal is to declare the type level keyed values like following.
@@ -27,7 +30,7 @@ import GHC.TypeLits (KnownSymbol, symbolVal)
 
 {- | A value with type level index.
  -}
-type NamedVal key = (Proxy key, String)
+type NamedVal v key = (Proxy key, v)
 
 {- | Type level list cons
  -}
@@ -35,42 +38,56 @@ data a :. b = a :. b
     deriving (Typeable, Eq, Show)
 infixr 8 :.
 
+{- | Type level @[]@
+ -}
+data Null = Null
+    deriving (Typeable, Eq, Show)
+
+{- | Main class for a list of values with type level key
+ -}
 class NamedList layout where
   type family NamedList' layout
-  kvs :: Proxy layout -> NamedList' layout -> [(String, String)]
   keys :: Proxy layout -> [String]
 
-instance (NamedList b, KnownSymbol x) => NamedList (NamedVal x :. b) where
-  type NamedList' (NamedVal x :. b) = NamedVal x :. NamedList' b
-  kvs :: forall b0 x0
-      .  (NamedList b0, KnownSymbol x0)
-      => Proxy (NamedVal x :. b0) -> NamedVal x0 :. NamedList' b0 -> [(String, String)]
-  kvs _ ((_, a) :. b) = (symbolVal (Proxy :: Proxy x0), a) : kvs (Proxy :: Proxy b0) b
+instance (NamedList b, KnownSymbol k) => NamedList (NamedVal v k :. b) where
+  type NamedList' (NamedVal v k :. b) = NamedVal v k :. NamedList' b
+  keys :: forall b0 k0 v0
+       .  (NamedList b0, KnownSymbol k0)
+       => Proxy (NamedVal v0 k0 :. b0) -> [String]
+  keys _ = symbolVal (Proxy :: Proxy k0) : keys (Proxy :: Proxy b0)
 
+instance NamedList Null where
+  type NamedList' Null = Null
+  keys :: forall v0
+       .  Proxy Null -> [String]
+  keys _ = []
 
-  keys :: forall b0 x0
-       .  (NamedList b0, KnownSymbol x0)
-       => Proxy (NamedVal x0 :. b0) -> [String]
-  keys _ = symbolVal (Proxy :: Proxy x0) : keys (Proxy :: Proxy b0)
+{- | Chek if the key is included in type level list.
+ -}
+class HasKey list pkey value where
+  get :: pkey -> list -> value
 
-instance (KnownSymbol x) => NamedList (NamedVal x) where
-  type NamedList' (NamedVal x) = NamedVal x
-  kvs :: forall x0
-      .  (KnownSymbol x0)
-      => Proxy (NamedVal x0) -> NamedVal x0 -> [(String, String)]
-  kvs _ (_, a) = [(symbolVal (Proxy :: Proxy x0), a)]
+instance (KnownSymbol k) =>
+  HasKey (NamedVal v k :. b) (Proxy k) v where
+  get :: forall b0 k0 v0
+      .  (KnownSymbol k0)
+      => Proxy k0 -> NamedVal v0 k0 :. b0 -> v0
+  get _ ((_, a) :. _) = a
 
-  keys :: forall x0
-       .  (KnownSymbol x0)
-       => Proxy (NamedVal x0) -> [String]
-  keys _ = [symbolVal (Proxy :: Proxy x0)]
+instance (NamedList b, KnownSymbol k, HasKey b (Proxy k) v) =>
+  HasKey (a :. b) (Proxy k) v where
+  get _ (_ :. b) = get (Proxy :: Proxy k) b
 
-namedVal :: forall x. String -> NamedVal x
-namedVal val = (Proxy :: Proxy x, val)
+instance (KnownSymbol k, v ~ Null) =>
+  HasKey Null (Proxy k) v where
+  get _ Null = Null
 
-type MyAPI = NamedVal "foo" :. NamedVal "bar" :. NamedVal "baz"
-myKvs :: [(String, String)]
-myKvs = kvs (Proxy :: Proxy MyAPI) $
-  (namedVal "var0" :: NamedVal "foo") :.
-  (namedVal "var1" :: NamedVal "bar") :.
-  (namedVal "var2" :: NamedVal "baz")
+namedVal :: forall k v
+         . (KnownSymbol k)
+         => v -> NamedVal v k
+namedVal a = (Proxy, a)
+
+sampleList =
+  (namedVal "str"   :: NamedVal String "foo") :.
+  (namedVal 34      :: NamedVal Int "bar") :.
+  (namedVal True    :: NamedVal Bool "baz") :. Null

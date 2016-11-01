@@ -18,10 +18,17 @@ main :: IO ()
 main = do
   putStrLn "Title: "
   a0 <- getLine
+  let
+    a = a0
+    b = "foo" :: String
+    arr = ["foo", "bar"]
+    f v = "<span>v</span>" :: String
   TLIO.putStrLn . toLazyText . ($ ("" :: Text)) $
-    $(withDict (keys (Proxy :: Proxy MyAPI))
-      (textFile "app/test.html")
-    )
-    $ LHM.fromList $ kvs (Proxy :: Proxy MyAPI) $
-      (namedVal a0 :: NamedVal "a") :.
-      (namedVal "var1" :: NamedVal "b")
+    $(textFile "app/test.html")
+
+    -- $(withDict (keys (Proxy :: Proxy MyAPI))
+    --   (textFile "app/test.html")
+    -- )
+    -- $ LHM.fromList $ kvs (Proxy :: Proxy MyAPI) $
+    --   (namedVal a0 :: NamedVal "a") :.
+    --   (namedVal "var1" :: NamedVal "b")
