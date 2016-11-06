@@ -3,6 +3,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module TH where
 
@@ -19,6 +21,10 @@ args =
   (namedVal "str" :: NamedVal String "a") :.
   (namedVal "str2" :: NamedVal String "b") :. Null
 
+{-|
+  >>> $(withDict (keys' args) test) args
+  "strstr2"
+-}
 withDict :: [String] -> Q Exp -> Q Exp
 withDict ls q = do
   dict <- newName "dict"
