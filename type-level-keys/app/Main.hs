@@ -10,8 +10,8 @@ import Data.Text.Internal.Builder (toLazyText)
 import qualified Data.Text.Lazy.IO as TLIO
 import TH
 import Data.Proxy (Proxy(..))
-import Type ((:.)(..), NamedVal, keys, kvs, namedVal)
 import Data (MyAPI)
+import Data.TypeLevelKVList ((:.)(..), NamedVal, keys, namedVal)
 import Text.Shakespeare.Text (textFile)
 
 main :: IO ()
@@ -21,7 +21,6 @@ main = do
   let
     a = a0
     b = "foo" :: String
-    arr = ["foo", "bar"]
     f v = "<span>v</span>" :: String
   TLIO.putStrLn . toLazyText . ($ ("" :: Text)) $
     $(textFile "app/test.html")

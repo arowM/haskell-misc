@@ -3,6 +3,6 @@
 
 module Data where
 
-import Type ((:.), NamedVal)
+import Data.TypeLevelKVList ((:.), NamedVal)
 
-type MyAPI = NamedVal "a" :. NamedVal "b"
+type MyAPI = NamedVal String "a" :. NamedVal String "b"

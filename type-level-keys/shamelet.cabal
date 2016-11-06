@@ -30,6 +30,7 @@ executable shamelet-exe
                      , shamelet
                      , text
                      , unordered-containers
+                     , type-level-kv-list
                      , xml-conduit
                      , xml-hamlet
                      , template-haskell
