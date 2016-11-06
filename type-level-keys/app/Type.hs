@@ -43,6 +43,11 @@ infixr 8 :.
 data Null = Null
     deriving (Typeable, Eq, Show)
 
+type family Lookup pkey list where
+  Lookup pk ((pk, v) :. b) = v
+  Lookup pk ((px, v) :. b) = Lookup pk b
+  Lookup pk Null = Null
+
 {- | Main class for a list of values with type level key
  -}
 class NamedList layout where
@@ -65,22 +70,22 @@ instance NamedList Null where
 {- | Chek if the key is included in type level list.
  -}
 class HasKey list pkey value where
-  get :: pkey -> list -> value
+  get' :: pkey -> list -> value
 
 instance (KnownSymbol k) =>
   HasKey (NamedVal v k :. b) (Proxy k) v where
-  get :: forall b0 k0 v0
+  get' :: forall b0 k0 v0
       .  (KnownSymbol k0)
       => Proxy k0 -> NamedVal v0 k0 :. b0 -> v0
-  get _ ((_, a) :. _) = a
+  get' _ ((_, a) :. _) = a
 
 instance (NamedList b, KnownSymbol k, HasKey b (Proxy k) v) =>
   HasKey (a :. b) (Proxy k) v where
-  get _ (_ :. b) = get (Proxy :: Proxy k) b
+  get' _ (_ :. b) = get' (Proxy :: Proxy k) b
 
 instance (KnownSymbol k, v ~ Null) =>
   HasKey Null (Proxy k) v where
-  get _ Null = Null
+  get' _ Null = Null
 
 namedVal :: forall k v
          . (KnownSymbol k)
@@ -91,3 +96,8 @@ sampleList =
   (namedVal "str"   :: NamedVal String "foo") :.
   (namedVal 34      :: NamedVal Int "bar") :.
   (namedVal True    :: NamedVal Bool "baz") :. Null
+
+get :: (HasKey list pkey (Lookup pkey list))
+    => pkey -> list -> Lookup pkey list
+get (pkey :: pkey) (list :: list) =
+  get' pkey list :: Lookup pkey list
